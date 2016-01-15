@@ -71,8 +71,10 @@ BOARD_RECOVERY_SWIPE := true
 BOARD_SUPPRESS_SECURE_ERASE := true
 BOARD_USES_MMCUTILS := true
 TARGET_PREBUILT_KERNEL := device/htc/hiae/recovery/kernel
-#TARGET_RECOVERY_PIXEL_FORMAT := "BGR_565"
-#RECOVERY_GRAPHICS_USE_LINELENGTH := true
+TARGET_HW_DISK_ENCRYPTION := true
+
+# Keymaster - Wait for qseecom to load
+TARGET_KEYMASTER_WAIT_FOR_QSEE := true
 
 # TWRP Build Flags
 TW_THEME := portrait_hdpi
@@ -82,12 +84,10 @@ TW_INCLUDE_CRYPTO := true
 TW_INCLUDE_NTFS_3G := true
 #TW_INPUT_BLACKLIST := "hbtp_vm"
 TW_NO_EXFAT_FUSE := true
-#TW_NO_SCREEN_BLANK := true
 TW_BRIGHTNESS_PATH := /sys/class/leds/lcd-backlight/brightness
-#TWRP_EVENT_LOGGING := true
 
 # Vendor Init
 TARGET_PLATFORM_DEVICE_BASE := /devices/soc.0/
 TARGET_UNIFIED_DEVICE := true
 TARGET_INIT_VENDOR_LIB := libinit_msm
-TARGET_LIBINIT_DEFINES_FILE := device/htc/hiae/init/init_hiae.c
+TARGET_LIBINIT_DEFINES_FILE := device/htc/hiae/init/init_hiae.cpp

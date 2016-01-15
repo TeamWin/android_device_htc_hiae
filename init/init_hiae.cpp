@@ -42,7 +42,7 @@ void common_properties()
     property_set("ro.ril.disable.cpc", "1");
 }
 
-void cdma_properties(char default_cdma_sub[], char default_network[])
+void cdma_properties(char const default_cdma_sub[], char const default_network[])
 {
     property_set("ro.telephony.default_cdma_sub", default_cdma_sub);
     property_set("ro.telephony.default_network", default_network);
@@ -58,7 +58,7 @@ void cdma_properties(char default_cdma_sub[], char default_network[])
     property_set("persist.radio.snapshot_timer", "22");
 }
 
-void gsm_properties(char default_network[])
+void gsm_properties(char const default_network[])
 {
     property_set("ro.telephony.default_network", default_network);
     property_set("telephony.lteOnGsmDevice", "1");
@@ -69,7 +69,6 @@ void init_msm_properties(unsigned long msm_id, unsigned long msm_ver, char *boar
     char platform[PROP_VALUE_MAX];
     char bootmid[PROP_VALUE_MAX];
     char device[PROP_VALUE_MAX];
-    char devicename[PROP_VALUE_MAX];
     int rc;
 
     rc = property_get("ro.board.platform", platform);
