@@ -92,7 +92,7 @@ service sbinqseecomd /sbin/qseecomd
     group root
     seclabel u:r:recovery:s0
 
-service chargeled /sbin/chargeled2
+service chargeled /sbin/chargeled
     disabled
     seclabel u:r:healthd:s0
 
