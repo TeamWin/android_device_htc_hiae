@@ -1,2 +1,0 @@
-add_lunch_combo omni_hiae-userdebug
-add_lunch_combo omni_hiae-eng
