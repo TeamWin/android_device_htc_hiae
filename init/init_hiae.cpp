@@ -34,74 +34,111 @@
 #include "log.h"
 #include "util.h"
 
-void common_properties()
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/mount.h>
+
+#define DEV_BLOCK_SYSTEM "/dev/block/bootdevice/by-name/system"
+
+void set_props_from_file(const char *filename)
 {
-    property_set("rild.libargs", "-d /dev/smd0");
-    property_set("ro.ril.hsdpa.category", "14");
-    property_set("ro.ril.hsxpa", "4");
-    property_set("ro.ril.disable.cpc", "1");
+    int IsSet_ro_product_device = 0;
+    FILE *fp = fopen(filename, "r");
+
+    if (fp) {
+        char line[1024];
+
+        char propname[PROP_NAME_MAX];
+        char propvalue[PROP_VALUE_MAX];
+        char *pch;
+
+        while ((fgets(line, sizeof(line), fp))) {
+            if (line[0] == '\n' || line[0] == '#') continue;
+
+            pch = strtok(line, "=\n");
+            if (!pch || strlen(pch) >= PROP_NAME_MAX) continue;
+            strcpy(propname, pch);
+
+            pch = strtok(NULL, "=\n");
+            if (!pch || strlen(pch) >= PROP_VALUE_MAX) continue;
+            strcpy(propvalue, pch);
+
+            if (strcmp(propname, "ro.build.fingerprint") == 0) {
+                property_set(propname, propvalue);
+            }
+            else if (strcmp(propname, "ro.product.device") == 0) {
+                property_set(propname, propvalue);
+                IsSet_ro_product_device = 1;
+            }
+        }
+        fclose(fp);
+    }
+
+    if (!IsSet_ro_product_device) {
+#ifdef GETPROP_RETURNS_STRING
+        std::string propvalue;
+        propvalue = property_get("ro.build.product");
+        property_set("ro.product.device", propvalue.c_str());
+#else
+        char propvalue[PROP_VALUE_MAX];
+        property_get("ro.build.product", propvalue);
+        property_set("ro.product.device", propvalue);
+#endif
+    }
 }
 
-void cdma_properties(char const default_cdma_sub[], char const default_network[])
+void set_props_from_build(void)
 {
-    property_set("ro.telephony.default_cdma_sub", default_cdma_sub);
-    property_set("ro.telephony.default_network", default_network);
+    if (access("/system/build.prop", R_OK) == 0) {
+        set_props_from_file("/system/build.prop");
+        return;
+    }
 
-    property_set("telephony.lteOnCdmaDevice", "1");
-    property_set("ro.ril.svdo", "true");
-    property_set("ro.ril.disable.fd.plmn.prefix", "23402,23410,23411,23420");
-    property_set("ro.ril.enable.sdr", "0");
-    property_set("ro.ril.enable.gea3", "1");
-    property_set("ro.ril.enable.a53", "1");
-    property_set("ro.ril.enable.r8fd", "1");
-    property_set("persist.radio.snapshot_enabled", "1");
-    property_set("persist.radio.snapshot_timer", "22");
-}
-
-void gsm_properties(char const default_network[])
-{
-    property_set("ro.telephony.default_network", default_network);
-    property_set("telephony.lteOnGsmDevice", "1");
-}
-
-void init_msm_properties(unsigned long msm_id, unsigned long msm_ver, char *board_type)
-{
-    char platform[PROP_VALUE_MAX];
-    char bootmid[PROP_VALUE_MAX];
-    char device[PROP_VALUE_MAX];
-    int rc;
-
-    rc = property_get("ro.board.platform", platform);
-    if (!rc || strncmp(platform, ANDROID_TARGET, PROP_VALUE_MAX))
+    if (mkdir("/tmpsys", 777) != 0)
         return;
 
-    property_get("ro.boot.mid", bootmid);
+    int is_mounted = mount(DEV_BLOCK_SYSTEM, "/tmpsys", "ext4", MS_RDONLY | MS_NOATIME , "") == 0;
 
-    if (strstr(bootmid, "2PQ930000")) {
+    if (!is_mounted)
+        is_mounted = mount(DEV_BLOCK_SYSTEM, "/tmpsys", "f2fs", MS_RDONLY | MS_NOATIME , "") == 0;
+
+    if (is_mounted) {
+        set_props_from_file("/tmpsys/build.prop");
+        umount("/tmpsys");
+    }
+    rmdir("/tmpsys");
+}
+
+void vendor_load_properties()
+{
+    std::string platform;
+    std::string bootmid;
+    std::string device;
+
+    platform = property_get("ro.board.platform");
+    if (platform != ANDROID_TARGET)
+        return;
+
+    bootmid = property_get("ro.boot.mid");
+
+    if (bootmid == "2PQ930000") {
         /* hiae_whl (Sprint) */
-        common_properties();
-        cdma_properties("1", "8");
         property_set("ro.build.product", "htc_hiaewhl");
-        property_set("ro.product.device", "htc_hiaewhl");
         property_set("ro.product.model", "2PQ93");
-    } else if (strstr(bootmid, "2PQ910000")) {
+    } else if (bootmid == "2PQ910000") {
         /* hiae_uhl (Europe) */
-        common_properties();
-        gsm_properties("9");
-        property_set("ro.build.fingerprint", "HTC/htc_hiaeuhl/htc_hiaeuhl:6.0/MRA58K/buildteam10132347:user/release-keys");
         property_set("ro.build.product", "htc_hiaeuhl");
-        property_set("ro.product.device", "htc_hiaeuhl");
         property_set("ro.product.model", "HTC One A9");
     } else {
         /* hiae_ul (GSM) */
-        common_properties();
-        gsm_properties("9");
-        property_set("ro.build.fingerprint", "htc/hiaeul_00502/htc_hiaeul:6.0/MRA58K/635081.3:user/release-keys");
         property_set("ro.build.product", "htc_hiaeul");
-        property_set("ro.product.device", "htc_hiaeul");
         property_set("ro.product.model", "HTC One A9");
     }
 
-    property_get("ro.product.device", device);
-    ERROR("Found bootmid %s setting build properties for %s device\n", bootmid, device);
+    set_props_from_build();
+
+    device = property_get("ro.product.device");
+    ERROR("Found bootmid %s setting build properties for %s device\n", bootmid.c_str(), device.c_str());
 }
