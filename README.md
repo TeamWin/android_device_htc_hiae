@@ -3,7 +3,7 @@ TeamWin Recovery Project
 Device files for HTC One (A9)
 Codename: Hima_Aero (hiae)
 
-Builds with OmniROM android-6.0 tree
+Builds with OmniROM android-7.1 tree
 
 cat proc/emmc:
 dev:        size     erasesize name
