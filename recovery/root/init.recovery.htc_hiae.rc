@@ -1,13 +1,15 @@
-import /init.recovery.htc_decrypt.rc
+import /init.recovery.qcom_decrypt.rc
 
 on init
     wait /dev/block/platform/soc.0/{ro.boot.bootdevice}
     symlink /dev/block/platform/soc.0/{ro.boot.bootdevice} /dev/block/bootdevice
 
-    # exfat
+    # Load Tuxera exFAT module
     insmod /system/lib/modules/texfat.ko
 
 on boot
+    export LD_PRELOAD /sbin/liblog_htc_sbin.so
+
     start chargeled
 
 service chargeled /sbin/chargeled
