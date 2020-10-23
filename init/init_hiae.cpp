@@ -123,14 +123,14 @@ void vendor_load_properties()
 
     bootmid = property_get("ro.boot.mid");
 
-    if (bootmid == "2PQ930000") {
-        /* hiae_whl (Sprint) */
-        property_set("ro.build.product", "htc_hiaewhl");
-        property_set("ro.product.model", "2PQ93");
-    } else if (bootmid == "2PQ910000") {
+    if (bootmid == "2PQ910000") {
         /* hiae_uhl (Europe) */
         property_set("ro.build.product", "htc_hiaeuhl");
         property_set("ro.product.model", "HTC One A9");
+    } else if (bootmid == "2PQ930000") {
+        /* hiae_whl (Sprint) */
+        property_set("ro.build.product", "htc_hiaewhl");
+        property_set("ro.product.model", "2PQ93");
     } else {
         /* hiae_ul (GSM) */
         property_set("ro.build.product", "htc_hiaeul");
